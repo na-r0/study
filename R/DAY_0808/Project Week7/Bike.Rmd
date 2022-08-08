@@ -1,0 +1,186 @@
+---
+title: "bike-sharing-demand"
+author: "na-ryoung"
+date: "2022-08-08"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+getwd()
+```
+
+### read dateframe
+
+```{r cars}
+df <- read.csv('./bike/train.csv') # ./<- 현재 디렉토리
+str(df)
+summary(df)
+```
+
+### 결측치 확인
+
+```{r}
+sum(!complete.cases(df))
+```
+
+### 이상치 처리
+
+```{r}
+# 처리하기 전
+nrow(df)
+```
+
+```{r}
+outlier <- boxplot.stats(df$count)$out # count 이상치 확인
+df[df$count %in% outlier,] <- NA 
+df <- na.omit(df) # 결측치 삭제
+# 처리한 후
+nrow(df)
+```
+
+### datetime 컬럼 처리
+
+```{r}
+library(lubridate)
+
+df$Year <- year(df$datetime)
+df$Month <- month(df$datetime)
+df$Day <- day(df$datetime)
+df$Hour <- hour(df$datetime)
+head(df,n=10)
+```
+
+### 1. 연도별 자전거 대여수
+
+```{r}
+yeardf <- aggregate(df[,'count'], by=list(Year=df$Year),FUN = mean) # 연도별 평균 df
+barplot(yeardf$x,names.arg = yeardf$Year,
+        main = 'number of rentals per year',ylim = c(0,250),
+        xlab = 'year', ylab = 'number of rentals average',col=c('steelblue','orange'))
+```
+
+#### <b>-<span style='color:tomato'> 이용자수 증가 </span></b>
+
+
+
+### 2-(1). 계절별 자전거 대여수
+```{r}
+seasondf <- aggregate(df[,'count'], by=list(Season=df$season),FUN = mean) # 월별 평균 df
+barplot(seasondf$x, names.arg = c('spring','summer','fall','winter'),main = 'number of rentals per season',
+        ylim = c(0,250),xlab = 'month',ylab = 'number of rentals average',
+        col=c('pink','skyblue','#CC0000','#E0E0E0'))
+```
+
+#### <b>- <span style='color:tomato'> 봄봄봄  </span>?</b>
+
+
+```{r}
+sdf <- split(df,f=df$season)
+# 1: spring에 1월부터 3월이 포함됨
+head(sdf$`1`,n=10)
+tail(sdf$`1`,n=10)
+```
+
+
+
+### 2-(2). 월별 자전거 대여수
+
+```{r}
+monthdf <- aggregate(df[,'count'], by=list(Month=df$Month),FUN = mean) # 월별 평균 df
+barplot(monthdf$x, names.arg = rownames(monthdf),main = 'number of rentals per month',ylim = c(0,250),
+        xlab = 'month',ylab = 'number of rentals average',col=terrain.colors(12))
+```
+
+#### <b>- <span style='color:tomato'> 봄봄봄  </span>?</b>
+
+
+
+
+
+### 3. 시간별 자전거 대여수
+
+```{r}
+boxplot(df$count~df$Hour,col=terrain.colors(24),
+        main = 'number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+```
+
+### 3-(1) 평일/주말 시간별 자전거 대여수
+
+```{r}
+weekday <- df[df$workingday==1,] # 평일
+weekend <- df[df$workingday==0,] # 주말
+
+par(mfrow=c(1,2))
+boxplot(weekday$count~weekday$Hour,col=heat.colors(24),
+        main = 'weekday number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+boxplot(weekend$count~weekend$Hour,col=rainbow(24),
+        main = 'weekend number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+par(mfrow=c(1,1))
+```
+
+### 4. 날씨별 자전거 대여수
+
+```{r}
+weatherdf <- aggregate(df[,'count'], by=list(Weather=df$weather),FUN = mean) # 날씨별 평균 df
+barplot(weatherdf$x, names.arg = c('clear','mist/cloudy','light rain/snow','heavy rain/ice'),
+        main = 'number of rentals per weather',ylim = c(0,200),
+        xlab = 'weather',ylab = 'number of rentals average',col=c('#0066CC','#A0A0A0','#99CCFF','#E0E0E0'))
+```
+
+```{r}
+subset(df,subset=(weather==4),select=c(1,5,12)) # weather 4 자료 하나밖에 없음
+```
+
+### 5-(1). 온도와 자전거 대여수 상관관계
+
+```{r}
+plot(df$temp,df$count,pch=1,col='red',
+     main = 'number of rentals per temperture',
+     xlab = 'temperture', ylab = 'number of rentals')
+```
+
+### 5-(2). 체감온도와 자전거 대여수 상관관계
+
+```{r}
+plot(df$atemp,df$count,pch=19,col='tomato',
+     main = 'number of rentals per sensory temperature',
+     xlab = 'sensory temperature', ylab = 'number of rentals')
+```
+
+### 6. 습도와 자전거 대여수 상관관계
+
+```{r}
+plot(df$humidity,df$count,pch=8,col='blue',
+     main = 'number of rentals per humidity',
+     xlab = 'humidity', ylab = 'number of rentals')
+```
+
+### 7. 바람세기와 자전거 대여수 상관관계
+```{r}
+plot(df$windspeed,df$count,pch=10,col='#00FFFF',
+     main = 'number of rentals per windspeed',
+     xlab = 'windspeed', ylab = 'number of rentals')
+```
+
+### 8. 온도, 체감온도, 습도, 바람세기와 자전거 대여수의 상관계수
+```{r}
+ndf<- data.frame(cbind(count=df$count,temperture=df$temp,atemperture=df$atemp,humidity=df$humidity,
+                       windspeed=df$windspeed))
+cor(ndf)[1,]
+```
+
+### 8-(1). 온도와 비회원/회원 간 자전거 대여수의 상관계수
+```{r}
+cor(df$casual,df$temp)
+cor(df$registered,df$temp)
+
+cbind(df$casual,df$count)
+plot(cbind(df$temp,df$temp),cbind(df$casual,df$registered),col=c('red','blue'))
+
+```
