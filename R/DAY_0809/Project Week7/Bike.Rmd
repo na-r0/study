@@ -1,0 +1,277 @@
+---
+title: "bike-sharing-demand"
+author: "na-ryoung"
+date: "2022-08-08"
+output:
+  html_document: default
+  word_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+getwd()
+```
+
+### read dateframe
+
+```{r cars}
+df <- read.csv('./bike/train.csv') # ./<- 현재 디렉토리
+str(df)
+summary(df)
+```
+
+### 결측치 확인
+
+```{r}
+sum(!complete.cases(df))
+```
+
+### 이상치 처리
+
+```{r}
+# 처리하기 전
+nrow(df)
+```
+
+```{r}
+outlier <- boxplot.stats(df$count)$out # count 이상치 확인
+df[df$count %in% outlier,] <- NA 
+df <- na.omit(df) # 결측치 삭제
+# 처리한 후
+nrow(df)
+```
+
+### datetime 컬럼 처리
+
+```{r}
+library(lubridate)
+
+df$Year <- year(df$datetime)
+df$Month <- month(df$datetime)
+df$Day <- day(df$datetime)
+df$Hour <- hour(df$datetime)
+head(df,n=10)
+```
+
+### 1. 연도별 자전거 대여수
+
+```{r fig.width=6}
+yeardf <- aggregate(df[,'count'], by=list(Year=df$Year),FUN = mean) # 연도별 평균 df
+barplot(yeardf$x,names.arg = yeardf$Year,
+        main = 'number of rentals per year',ylim = c(0,250),
+        xlab = 'year', ylab = 'number of rentals average',col=c('steelblue','orange'))
+```
+
+#### <b>· 2012년<span style='color:tomato'> 이용자수 증가 </span></b>
+
+
+
+### 2-(1). 계절별 자전거 대여수
+```{r}
+seasondf <- aggregate(df[,'count'], by=list(Season=df$season),FUN = mean) # 월별 평균 df
+barplot(seasondf$x, names.arg = c('spring','summer','fall','winter'),main = 'number of rentals per season',
+        ylim = c(0,250),xlab = 'month',ylab = 'number of rentals average',
+        col=c('pink','skyblue','#CC0000','#E0E0E0'))
+```
+
+#### <b>· <span style='color:tomato'> 봄봄봄</span>?</b>
+#####     - 겨울보다 봄에 이용자수가 낮게 나옴
+
+
+```{r}
+sdf <- split(df,f=df$season)
+# 1: spring에 1월부터 3월이 포함됨
+head(sdf$`1`,n=5)
+tail(sdf$`1`,n=5)
+```
+
+
+### 2-(2). 월별 자전거 대여수
+
+```{r}
+monthdf <- aggregate(df[,'count'], by=list(Month=df$Month),FUN = mean) # 월별 평균 df
+my.color <- ifelse(monthdf$Month>=3&monthdf$Month<=5,'pink',
+                   ifelse(monthdf$Month>=6&monthdf$Month<=8,'skyblue',
+                           ifelse(monthdf$Month>=9&monthdf$Month<=11,'#CC0000','#E0E0E0')))
+barplot(monthdf$x, names.arg = rownames(monthdf),main = 'number of rentals per month',ylim = c(0,250),
+        xlab = 'month',ylab = 'number of rentals average',col=my.color)
+```
+
+#### <b>· 겨울철<span style='color:tomato'> 하락</span>, 여름철 <span style='color:tomato'>상승  </span></b>
+
+
+
+### 3. 시간별 자전거 대여수
+
+```{r}
+boxplot(df$count~df$Hour,col=hcl.colors(24),
+        main = 'number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+```
+
+
+#### <b>· <span style='color:tomato'>이상치  </span></b>
+#### <b>· <span style='color:tomato'>출퇴근시간대  </span></b>
+
+
+
+### 3-(1) 주중/주말 시간별 자전거 대여수
+
+```{r fig.height=7,fig.width=15}
+weekday <- df[df$workingday==1,] # 주중
+weekend <- df[df$workingday==0,] # 주말
+
+par(mfrow=c(1,2))
+boxplot(weekday$count~weekday$Hour,col=terrain.colors(24),
+        main = 'weekday number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+boxplot(weekend$count~weekend$Hour,col=terrain.colors(24),
+        main = 'weekend number of rentals per hour',
+        xlab = 'hour', ylab = 'number of rentals')
+par(mfrow=c(1,1))
+```
+
+
+
+#### <b>· 주중:<span style='color:tomato'> 출퇴근시간대  </span></b>
+
+#### <b>· 주말:<span style='color:tomato'> 낮시간대  </span></b>
+
+
+
+### 4. 날씨별 자전거 대여수
+
+```{r}
+weatherdf <- aggregate(df[,'count'], by=list(Weather=df$weather),FUN = mean) # 날씨별 평균 df
+barplot(weatherdf$x, names.arg = c('clear','mist/cloudy','light rain/snow','heavy rain/ice'),
+        main = 'number of rentals per weather',ylim = c(0,200),
+        xlab = 'weather',ylab = 'number of rentals average',col=c('#0066CC','#A0A0A0','#99CCFF','#E0E0E0'))
+```
+
+
+#### <b>· <span style='color:tomato'>궂은 날씨</span>?</b>
+
+
+
+```{r}
+# weather 4 자료 하나밖에 없음
+table(df$weather) 
+subset(df,subset=(weather==4),select=c(1,5,12))
+```
+
+
+#### <b>· weather 4 범주의 <span style='color:tomato'> 데이터 유의성  </span></b>
+
+
+### 5 . 온도/체감온도와 자전거 대여수 상관관계
+
+```{r}
+# 온도랑 체감온도는 깊은 상관관계
+adf <- data.frame(cbind(temperture=df$temp,atemperture=df$atemp))
+cor(adf)
+
+# 온도/체감온도와 count
+cat('온도:',cor(df$temp,df$count))
+cat('체감온도:',cor(df$atemp,df$count))
+
+#par(mfrow=c(1,2))
+plot(df$temp,df$count,pch=1,col='red',
+     main = 'number of rentals per temperture',
+     xlab = 'temperture', ylab = 'number of rentals')
+#plot(df$atemp,df$count,pch=19,col='tomato',
+#     main = 'number of rentals per sensory temperature',
+#     xlab = 'sensory temperature', ylab = 'number of rentals')
+#par(mfrow=c(1,1))
+```
+
+
+
+#### <b>· 온도와 체감온도는 <span style='color:tomato'>깊은 상관관계  </span></b>
+
+#### <b>· 온도와 대여수는<span style='color:tomato'> 양의 상관관계  </span></b>
+#### - but, 관계성 약함
+
+
+
+### 6. 습도와 자전거 대여수 상관관계
+
+```{r}
+cor(df$humidity,df$count)
+plot(df$humidity,df$count,pch=8,col='blue',
+     main = 'number of rentals per humidity',
+     xlab = 'humidity', ylab = 'number of rentals')
+```
+
+
+#### <b>· 습도와 대여수는<span style='color:tomato'> 음의 상관관계  </span></b>
+#### - but, 관계성 약함
+
+
+
+### 7. 풍속과 자전거 대여수 상관관계
+```{r}
+cor(df$windspeed,df$count)
+plot(df$windspeed,df$count,pch=10,col='#00FFFF',
+     main = 'number of rentals per windspeed',
+     xlab = 'windspeed', ylab = 'number of rentals')
+```
+
+
+#### <b>· 풍속과 대여수는<span style='color:tomato'> X 상관관계 X  </span></b>
+#### - 0에 데이터가 몰려 있음. 데이터가 유의성 의문.
+
+
+
+### 8. 수치형 컬럼들 corrgram
+```{r}
+library(corrgram)
+# 파랑-양, 빨강-음, 색이 진할수록 강함
+corrgram(df[,c(6,7,8,9,10,11,12)], order=TRUE,
+         main="numeric columns corrgram",upper.panel = panel.cor) # upper.panel: 상단에 상관계수 값 
+#tdf <- data.frame(cbind(temperture=df$temp,casual=df$casual,registered=df$registered))
+#cor(tdf)
+```
+
+
+#### <b>· 비회원이 온도/습도와<span style='color:tomato'> 조금 더 큰 상관관계  </span></b>
+#### - 즉흥적
+
+
+### 9. 평일/주말 시간별 비회원/회원 간 자전거 대여수 비교
+
+```{r fig.height=5,fig.width=10}
+library(ggplot2)
+hourdf1 <- aggregate(df[,'casual'], by=list(Hour=df$Hour,Workingday=df$workingday), FUN = mean)
+hourdf2 <- aggregate(df[,'registered'], by=list(Hour=df$Hour,Workingday=df$workingday), FUN = mean)
+hourdf1$Workingday <- ifelse(hourdf1$Workingday==0,'weekend','weekday')
+hourdf2$Workingday <- ifelse(hourdf2$Workingday==0,'weekend','weekday')
+
+ggplot(hourdf1,aes(x=Hour,y=x,col=Workingday),ylab('casual'))+
+  geom_point(size=2.0)+
+  geom_line(mapping=aes(group=Workingday),size=1.0)+
+  ggtitle('Casual number of rentals per hour')+
+  ylab('casual')
+```
+
+#### <b>· 비회원:<span style='color:tomato'> 비슷한 흐름  </span></b>
+
+```{r fig.height=5,fig.width=10}
+ggplot(hourdf2,aes(x=Hour,y=x,col=Workingday))+
+  geom_point(size=2.0)+
+  geom_line(mapping=aes(group=Workingday),size=1.0)+
+  ggtitle('Registered number of rentals per hour')+
+  ylab('registered')
+```
+
+
+#### <b>· 회원:<span style='color:tomato'> 출퇴근시간대  </span></b>
+#### - 대부분 그 시간에 이용하려고 등록한 듯 보임
+
+
+
+
+
+
