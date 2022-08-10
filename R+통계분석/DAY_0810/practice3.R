@@ -104,3 +104,73 @@ hist(y,xlab='X',ylab='mass',main='B(100,0.5)',prob=T,breaks=30)
 
 curve(dnorm(x,50,5),25,75,lty=2,lwd=2,col='red',add=T)
 
+
+
+
+
+
+
+
+
+# chap 5
+
+height <- survey$Height
+h.mean <- mean(height, na.rm=T)
+h.mean
+
+h.sd <- sd(height, na.rm = T)
+h.sd
+
+c(h.mean-1.96*h.sd, h.mean+1.96*h.sd)
+pnorm(191.6820,mean=h.mean,sd=h.sd,lower.tail = F)
+
+
+x <- seq(h.mean-3*h.sd,h.mean+3*h.sd,length.out=200)
+y <- dnorm(x,h.mean,h.sd)
+plot(x,y,type = 'l',col='lightgrey',lwd=2)
+abline(0,0,col='lightgrey',lwd=2)
+lower <- h.mean-1.96*h.sd
+upper <- h.mean+1.96*h.sd
+xlim <- x[lower<=x&x<=upper]
+ylim <- y[lower<=x&x<=upper] - 0.0001
+xlim <- c(xlim[1],xlim,tail(xlim,1))
+ylim <- c(0,ylim,0)
+polygon(xlim,ylim,col='lightgrey')
+
+
+
+shapiro.test(survey$Height)
+shapiro.test(survey$Age)
+
+set.seed(2022)
+x.unif <- runif(100,min=0,max=100)
+x.norm <- rnorm(100,mean(x.unif),sd(x.unif))
+
+shapiro.test(x.unif)
+shapiro.test(x.norm)
+
+par(mfrow=c(1,2))
+qqnorm(x.unif,col='tomato',main='Uniform Dist')
+qqline(x.unif)
+qqnorm(x.norm,col='steelblue',main='Normal Dist')
+qqline(x.norm)
+par(mfrow=c(1,1))
+
+
+
+# chap 6
+# t-분포의 자유도 차이에 따른 그래프 모양
+x <- seq(-3,3,length=200)
+curve(dt(x,df=30),min(x),max(x),lty=1,lwd=3,col='darkblue',
+      main='PDF of t-dist',xlab='t',ylab='density')
+curve(dt(x,df=5),min(x),max(x),lty=2,lwd=3,col='violet',add = T)
+curve(dt(x,df=1),min(x),max(x),lty=3,lwd=3,col='tomato',add = T)
+legend('topright',legend=c('df=30','df=5','df=1'),
+       col=c('darkblue','violet','tomato'),lty=c(1,2,3))
+
+
+
+
+
+
+
