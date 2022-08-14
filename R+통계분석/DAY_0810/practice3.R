@@ -123,21 +123,59 @@ hist(x,col='skyblue',breaks = 30,freq = F)
 x <- seq(min(x),max(x),length.out=200)
 curve(dnorm(x,172,10),add=T,col='tomato',lwd=2)
 
+# 𝑋~𝑁(172,10^2)일 때 
+# 1. 어떤 대학원 학생의 키가 160보다 크거나 180보다 작을 확률은?
+pnorm(q=160,mean = 172, sd=10)
+pnorm(q=160,mean = 172, sd=10,lower.tail = F)
+pnorm(q=180,mean = 172, sd=10)
+pnorm(q=180,mean = 172, sd=10,lower.tail = F)
 
+1 - pnorm(160,172,10) - pnorm(180,172,10,lower.tail = F)
 
+# 2. 상위 5% 또는 하위 5%에 속하는 대학원생의 키는?
+qnorm(p=0.05,mean=172,sd=10)
+qnorm(p=0.05,mean=172,sd=10,lower.tail = F)
 
+qnorm(c(0.05,0.95),172,10)
+qnorm(c(0.025,0.975),172,10)
+qnorm(c(0.005,0.995),172,10)
 
+# 표준 정규분포 Z~N(0,1)
+x <- seq(from=-3,to=3,length.out=200)
+plot(x,dnorm(x),type='l',col='tomato',lwd=2)
 
+# 모집단과 표본집단
+x <- 1:9
+sample(x,size=7)
+sample(x,size=10)
+sample(x,size=10,replace = T)
 
+# 중심극한정리
+x.norm <- rnorm(n=10000,mean=50,sd=25)
+hist(x.norm,col = 'orange',freq=F,ylim=c(0,0.02))
+mean(x.norm)
+sd(x.norm)
 
+x.bar <- c()
+for (i in 1:10000){
+  x.bar <- c(x.bar, mean(sample(x.norm,size=100)))
+}
+hist(x.bar,col='skyblue',freq=F)
 
+x.unif <- runif(n=10000,min=0,max=100)
+hist(x.unif,col='tomato',freq=F,ylim=c(0,0.02))
+mean(x.unif)
+sd(x.unif)
 
-
+x.bar <- c()
+for (i in 1:10000){
+  x.bar <- c(x.bar,mean(sample(x.unif,size=100)))
+}
+hist(x.bar,col = 'cyan3',freq=F)
 
 
 
 # chap 5
-
 height <- survey$Height
 h.mean <- mean(height, na.rm=T)
 h.mean
