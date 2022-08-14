@@ -105,6 +105,30 @@ hist(y,xlab='X',ylab='mass',main='B(100,0.5)',prob=T,breaks=30)
 curve(dnorm(x,50,5),25,75,lty=2,lwd=2,col='red',add=T)
 
 
+# chap 4
+# 이항분포
+# 𝑋: 공평한 동전 던지기를 size번 실행했을 때 앞면이 나온 횟수 
+set.seed(2022)
+rbinom(n=1,size=1,prob=0.5)
+rbinom(n=1,size=10,prob=0.5)
+
+x <- rbinom(n=10000,size=100,prob=0.5)
+hist(x,col='skyblue',breaks = 15)
+
+# 정규분포
+# 𝑋~𝑁(172, 10^2): 경북대 대학원 학생들의 키
+set.seed(2022)
+x <- rnorm(n=1000,mean=172,sd=10)
+hist(x,col='skyblue',breaks = 30,freq = F)
+x <- seq(min(x),max(x),length.out=200)
+curve(dnorm(x,172,10),add=T,col='tomato',lwd=2)
+
+
+
+
+
+
+
 
 
 
