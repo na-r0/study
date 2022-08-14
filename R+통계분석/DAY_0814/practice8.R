@@ -50,3 +50,144 @@ legend(x=2,y=30,lwd=2,col='steelblue',
        legend = paste('y =',intercept,'+',slope,'* x'))
 
 
+
+# chap 14 회귀분석의 유형
+# 단순선형회귀: 교육기간과 평균소득 간
+library(car)
+str(Prestige)  
+
+df <- Prestige
+plot(income~education,data=df,pch=19,col='steelblue')
+
+cor(df$education,df$income)
+
+formula <- income ~ education
+lm(formula = formula,data=df)
+
+model <- lm(formula = formula,data=Prestige)
+abline(model,lwd=2,col='rosybrown')
+
+summary(model)
+
+summary(resid(model)) # residuals
+confint(model) # 신뢰구간의 coefficients
+anova(model) #분산분석
+
+
+
+# 다중회귀분석
+# income ~ education + women + prestige
+df <- subset(Prestige,select=c(2,1,3,4))
+cor(df)
+
+plot(df,pch=19,col='gold')
+
+formula = income ~ education+women+prestige
+lm(formula=formula,data=df)
+
+model <- lm(income ~ ., data=df)
+summary(model)
+
+library(stargazer)
+stargazer(model,type='text',no.space = T)
+
+
+
+# 다항회귀분석
+# 교육기간과 평균소득의 관계를 직선보다 더 잘 설명하는 곡선이 있을까
+formula <- income ~ education+I(education^2)
+lm(formula=formula,data=Prestige)
+
+model <- lm(formula = formula,data=Prestige)
+summary(model)
+
+plot(income~education,data=Prestige,pch=19,col='gold2')
+library(dplyr)
+with(Prestige,lines(arrange(data.frame(education,fitted(model)),
+                            education),lty=1,lwd=3,col='orange'))
+
+
+
+
+# chap 15 회귀모델의 설명력
+df <- subset(mtcars,select = 1:6)
+cor(df)
+
+library(car)
+scatterplotMatrix(df,pch=19,col='steelblue',cex=1.2,
+                  regLine = list(method=lm,lwd=2,col='tomato'),
+                  smooth=list(smoother=loessLine,spread=F,
+                              lwd.smooth=2,col.smooth='orange'))
+
+
+# 결졍계수
+model <- lm(mpg ~ cyl+disp+hp+drat+wt,data=df)
+summary(model)
+
+# hp, wt
+model <- lm(mpg ~hp+wt,data=df)
+summary(model)
+
+# wt
+model <- lm(mpg ~wt,data=df)
+summary(model)
+
+plot(model)
+
+
+# 회귀모델 선택
+# 마력과 무게가 포함된 모델과 배기량과 기어비가 포함된 모델의 적합도 비교
+mtcars.lm1 <- lm(mpg ~ hp+wt,data=mtcars)
+mtcars.lm2 <- lm(mpg ~ hp+wt+disp+drat,data=mtcars)
+anova(mtcars.lm1,mtcars.lm2)
+
+# AIC 지표
+AIC(mtcars.lm1,mtcars.lm2)
+
+
+
+# mtcars 데이터셋에서 '후진선택법'으로 회귀모델 구축
+mtcars.lm <- lm(mpg ~ hp+wt+disp+drat,data=mtcars)
+step(mtcars.lm,direction = 'backward')
+
+
+
+# 더미변수
+str(InsectSprays)
+levels(InsectSprays$spray)
+
+sprays.lm <- lm(count~spray,data=InsectSprays)
+summary(sprays.lm)
+
+contrasts(InsectSprays$spray)
+
+
+
+
+
+# chap 16 선형모델의 일반화
+# 포아송회귀분석
+x <- 0:100
+pdf <- dpois(x,lambda = 10)
+plot(x,pdf,type='l',main='Poisson Dist')
+
+# 항뇌전증제를 투약 후 8 주 동안 발생하는 발작횟수에 미치는 영향 분석
+# 분석에 필요한 네 가지 변수만을 추출하여 요약통계량 확인
+library(robust)
+data("breslow.dat")
+str(breslow.dat)
+
+seizure <- breslow.dat[c('Base','Age','Trt','sumY')]
+summary(seizure)
+
+hist(seizure$sumY,breaks = 20,col='cornflowerblue')
+
+
+# 포아송 회귀분석 수행 -> glm()
+seizure.poisson <- glm(sumY ~ Base+Age+Trt,data=seizure,family=poisson)
+summary(seizure.poisson)
+
+
+
+
+
