@@ -189,5 +189,34 @@ summary(seizure.poisson)
 
 
 
+# 이항로지스틱 회귀분석
+e <- exp(1)
+z <- seq(-6,6,length=200)
+p <- 1/(1+e^(-z))
+plot(z,p,type='l',main='PDF of Logistic Fun')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
