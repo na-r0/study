@@ -1,0 +1,13 @@
+name: mythird
+title: mythird
+username:
+account: isna
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6809487
+bundleId: 6216634
+url: https://isna.shinyapps.io/mythird/
+when: 1660884364.41769
+lastSyncTime: 1660884364.41771
+asMultiple: FALSE
+asStatic: FALSE
